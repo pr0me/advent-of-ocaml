@@ -1,43 +1,59 @@
-let calculate_total_sum filename =
-  let r_max = 12 in
-  let g_max = 13 in
-  let b_max = 14 in
+let r_allowed = 12
+let g_allowed = 13
+let b_allowed = 14
 
-  let rec process_lines file game_number total_sum =
-    try
-      let line = input_line file in
-      let games = Str.split (Str.regexp "; ") line in
-      let max_counts =
-        List.map (fun game ->
-            let counts = Str.split (Str.regexp ", ") game in
-            let count_color color =
-              let color_counts = List.filter (fun s -> String.contains s color.[0]) counts in
-              let color_values = List.map (fun s -> int_of_string s) color_counts in
-              let max_color = List.fold_left max 0 color_values in
-              max_color
-            in
-            let max_r = count_color "red" in
-            let max_g = count_color "green" in
-            let max_b = count_color "blue" in
-            max_r, max_g, max_b
-          ) games
-      in
-      let all_below_max = List.for_all (fun (max_r, max_g, max_b) ->
-          max_r < r_max && max_g < g_max && max_b < b_max) max_counts
-      in
-      let total_sum' = if all_below_max then total_sum + game_number else total_sum in
-      process_lines file (game_number + 1) total_sum'
-    with End_of_file ->
-      total_sum
+let process_line line content =
+  let r_max = ref 0 in
+  let g_max = ref 0 in
+  let b_max = ref 0 in
+  let groups = Str.split (Str.regexp "; ") content in
+  ignore (List.iter (fun group ->
+    let values = Str.split (Str.regexp ", ") group in
+    let get_value color = 
+      try
+        let color_assign = List.find (fun s -> 
+          try
+            ignore (Str.search_forward (Str.regexp_string color) s 0);
+            true
+          with Not_found -> false
+        ) values in
+        let color_value = List.hd (Str.split (Str.regexp " ") color_assign) in
+        (* Printf.printf "Color Value: %s %s\n" color color_value; *)
+        int_of_string color_value
+      with Not_found -> 0
+    in
+
+    let red_value = get_value "red" in
+    let green_value = get_value "green" in
+    let blue_value = get_value "blue" in
+
+    if red_value > !r_max then r_max := red_value;
+    if green_value > !g_max then g_max := green_value;
+    if blue_value > !b_max then b_max := blue_value;
+
+  ) groups);
+
+  
+  
+  if !r_max <= r_allowed && !g_max <= g_allowed && !b_max <= b_allowed then
+    let _ = Printf.printf "[i] Adding game ID: %d\n" line in
+    Printf.printf "Max Red: %d\n" !r_max;
+    Printf.printf "Max Green: %d\n" !g_max;
+    Printf.printf "Max Blue: %d\n" !b_max;
+    line
+  else 
+    0
+
+let get_valid_games filename = 
+  let ic = open_in filename in
+  let rec loop i acc =
+    match input_line ic with
+    | line -> loop (i + 1) (acc + ((process_line (i) line)))
+    | exception End_of_file -> close_in ic; acc
   in
+  loop 0 0
 
-  let file = open_in filename in
-  let total_sum = process_lines file 1 0 in
-  close_in file;
-  total_sum
-;;
+let () = 
+  let sum = get_valid_games "clean_games.txt" in
+  Printf.printf "Sum of valid Game IDs: %d\n" sum
 
-let result = calculate_total_sum "clean_games.txt" in
-Printf.printf "Total sum of game numbers: %d\n" result;
-
-(* let _ = List.iter (Printf.printf "%s\n") counts in *)
