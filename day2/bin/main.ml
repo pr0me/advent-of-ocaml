@@ -1,16 +1,14 @@
-let r_allowed = 12
+(* let r_allowed = 12
 let g_allowed = 13
-let b_allowed = 14
+let b_allowed = 14 *)
 
-let process_line line content =
+let process_line _ content =
   let r_max = ref 0 in
   let g_max = ref 0 in
   let b_max = ref 0 in
-  Printf.printf "[i] Initial RMAX: %d\n" !r_max;
   let groups = Str.split (Str.regexp "; ") content in
   ignore (List.iter (fun group ->
     let values = Str.split (Str.regexp ", ") group in
-    ignore (List.iter(fun v -> Printf.printf "[i] Group split: %s\n" v) values);
     let get_value color = 
       try
         let color_assign = List.find (fun s -> 
@@ -20,7 +18,7 @@ let process_line line content =
           with Not_found -> false
         ) values in
         let color_value = List.hd (Str.split (Str.regexp " ") color_assign) in
-        Printf.printf "Color Value: %s %s\n" color color_value;
+        (* Printf.printf "Color Value: %s %s\n" color color_value; *)
         int_of_string color_value
       with Not_found -> 0
     in
@@ -32,16 +30,18 @@ let process_line line content =
     if red_value > !r_max then r_max := red_value;
     if green_value > !g_max then g_max := green_value;
     if blue_value > !b_max then b_max := blue_value;
-    Printf.printf "    Max Red: %d; Max Green: %d; Max Blue: %d\n" !r_max !g_max !b_max;
+    (* Printf.printf "    Max Red: %d; Max Green: %d; Max Blue: %d\n" !r_max !g_max !b_max; *)
 
   ) groups);
 
-  if !r_max <= r_allowed && !g_max <= g_allowed && !b_max <= b_allowed then
+  (* if !r_max <= r_allowed && !g_max <= g_allowed && !b_max <= b_allowed then
     let _ = Printf.printf "[i] Adding game ID: %d\n" line in
     Printf.printf "    Max Red: %d; Max Green: %d; Max Blue: %d\n" !r_max !g_max !b_max;
     line
   else 
-    0
+    0 *)
+
+  !r_max * !g_max * !b_max
 
 
 let get_valid_games filename = 
